@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./CSS/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+</head>
+<body class="light-theme">
+    <div class="container-fluid">
+        <div class="row my-4">
+            <div class="col-12 text-center">
+                <h1 class="font-weight-bold">To-Do List</h1>
+                <button class="btn btn-secondary" id="theme-toggle">
+                    <i class="bx bx-moon" id="moon-icon"></i>
+                    <i class="bx bx-sun" id="sun-icon" style="display: none;"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-12">
+                <form id="add-todo-form" class="form-inline justify-content-center">
+                    <input type="text" id="todo-input" class="form-control mr-2" placeholder="Add new to-do item...">
+                    <input type="date" id="deadline-input" class="form-control mr-2">
+                    <button type="button" class="btn btn-primary" id="add-todo-btn">Add</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <ul id="todo-list" class="list-group">
+                    <!-- To-Do List Items will be rendered here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+      <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
+    -->
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const moonIcon = document.getElementById('moon-icon');
+        const sunIcon = document.getElementById('sun-icon');
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            document.body.classList.toggle('light-theme');
+            moonIcon.style.display = moonIcon.style.display === 'none' ? 'inline' : 'none';
+            sunIcon.style.display = sunIcon.style.display === 'none' ? 'inline' : 'none';
+        });
+
+        // To-Do List functionality
+        const todoListContainer = document.getElementById('todo-list');
+        let todoList = JSON.parse(localStorage.getItem('todoList')) || [];
+
+        // Immediately render the to-do list
+        renderTodoList();
+
+        document.getElementById('add-todo-btn').addEventListener('click', () => {
+            const todoInput = document.getElementById('todo-input');
+            const deadlineInput = document.getElementById('deadline-input');
+            
+            if (todoInput.value.trim() !== '') {
+                const todo = {
+                    text: todoInput.value,
+                    deadline: deadlineInput.value,
+                    priority: 'Normal',
+                    completed: false
+                };
+                todoList.push(todo);
+                localStorage.setItem('todoList', JSON.stringify(todoList));
+                renderTodoList();
+                todoInput.value = '';
+                deadlineInput.value = '';
+            }
+        });
+
+        function renderTodoList() {
+            todoListContainer.innerHTML = '';
+            todoList.forEach((todo, index) => {
+                const todoItem = document.createElement('li');
+                todoItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                const todoTextClass = todo.completed ? 'text-decoration-line-through' : '';
+                
+                todoItem.innerHTML = `
+                    <div>
+                        <input type="checkbox" class="mr-2 complete-todo-checkbox" data-index="${index}" ${todo.completed ? 'checked' : ''}>
+                        <span class="${todoTextClass}">${todo.text}</span>
+                        <span class="badge badge-info">${todo.deadline}</span>
+                        <span class="badge badge-${getPriorityBadgeClass(todo.priority)}">${todo.priority}</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-sm mx-2 edit-todo-btn" data-index="${index}">Edit</button>
+                        <button class="btn btn-danger btn-sm mx-2 delete-todo-btn" data-index="${index}"><i class='bx bxs-trash-alt'></i></button>
+                        <div class="dropdown">
+                            <button class="btn btn-warning btn-sm dropdown-toggle priority-todo-btn" data-index="${index}" data-toggle="dropdown">Priority</button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" data-priority="Urgent">Urgent</a>
+                                <a class="dropdown-item" href="#" data-priority="Later">Later</a>
+                                <a class="dropdown-item" href="#" data-priority="Not Urgent">Not Urgent</a>
+                                <a class="dropdown-item" href="#" data-priority="Tomorrow">Tomorrow</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                todoListContainer.appendChild(todoItem);
+            });
+        }
+
+        function getPriorityBadgeClass(priority) {
+            switch (priority) {
+                case 'Urgent':
+                    return 'danger';
+                case 'Later':
+                    return 'warning';
+                case 'Not Urgent':
+                    return 'secondary';
+                case 'Tomorrow':
+                    return 'primary';
+                default:
+                    return 'info';
+            }
+        }
+
+        // Event delegation for handling edit, delete, complete, and priority buttons
+        todoListContainer.addEventListener('click', (e) => {
+            const targetElement = e.target;
+            const listItem = targetElement.closest('.list-group-item');
+            const index = listItem.querySelector('.priority-todo-btn').getAttribute('data-index');
+            
+
+            // Handle delete functionality
+            if (targetElement.classList.contains('delete-todo-btn')) {
+                todoList.splice(index, 1);
+                localStorage.setItem('todoList', JSON.stringify(todoList));
+                renderTodoList();
+            }
+
+            // Handle priority change functionality
+            if (targetElement.classList.contains('dropdown-item')) {
+                const selectedPriority = targetElement.getAttribute('data-priority');
+                todoList[index].priority = selectedPriority;
+                localStorage.setItem('todoList', JSON.stringify(todoList));
+                renderTodoList();
+            }
+
+            // Handle edit functionality
+            if (targetElement.classList.contains('edit-todo-btn')) {
+                const todoText = listItem.querySelector('span:last-child').innerText;
+                const todoDeadline = listItem.querySelector('.badge-info').innerText;
+
+                // Prompt user to edit the text and deadline
+                const newText = prompt('Edit To-Do', todoText);
+                const newDeadline = prompt('Edit Deadline', todoDeadline);
+
+                if (newText !== null && newText.trim() !== '') {
+                    todoList[index].text = newText;
+                }
+                if (newDeadline !== null && newDeadline.trim() !== '') {
+                    todoList[index].deadline = newDeadline;
+                }
+
+                localStorage.setItem('todoList', JSON.stringify(todoList));
+                renderTodoList();
+            }
+
+            // Handle complete functionality
+            if (targetElement.classList.contains('complete-todo-checkbox')) {
+                todoList[index].completed = targetElement.checked;
+                localStorage.setItem('todoList', JSON.stringify(todoList));
+                renderTodoList();
+            }
+        });
+    </script>
+</body>
+</html>
